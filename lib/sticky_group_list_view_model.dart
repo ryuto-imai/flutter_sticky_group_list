@@ -4,15 +4,14 @@ import 'package:flutter/material.dart';
 class StickyGroupListViewModel extends ChangeNotifier {
   final double headerDefaultHeight;
 
-  StickyGroupListViewModel({required this.headerDefaultHeight});
+  final List<GlobalObjectKey> keys;
 
   Map<GlobalObjectKey, double> _headerHeightMap = {};
 
   Map<GlobalObjectKey, double> get headerHeightMap => _headerHeightMap;
 
-
-  // 各Mapパラメータの初期化
-  void initParameters({required List<GlobalObjectKey> keys}) {
+  StickyGroupListViewModel(
+      {required this.headerDefaultHeight, required this.keys}) {
     _headerHeightMap =
         keys.fold(Map<GlobalObjectKey, double>(), (previousValue, element) {
       previousValue[element] = headerDefaultHeight;
@@ -20,11 +19,12 @@ class StickyGroupListViewModel extends ChangeNotifier {
     });
   }
 
+  // 指定したkeyのヘッダーの高さを取得する
   double getHeaderHeight(GlobalObjectKey? key) {
     return _headerHeightMap[key] ?? 0;
   }
 
-  // 指定したkeyのheaderHeightを更新する
+  // 指定したkeyのヘッダーの高さを更新する
   void setHeaderHeight(GlobalObjectKey key, double height) {
     if (height > headerDefaultHeight) {
       if (getHeaderHeight(key) == headerDefaultHeight) {

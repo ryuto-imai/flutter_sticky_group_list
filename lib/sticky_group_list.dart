@@ -49,9 +49,9 @@ class StickyGroupList<T, E extends Object> extends StatelessWidget {
         .forEach((key) => _headerGlobalKeys[key] = GlobalObjectKey(key));
     return ListenableProvider(
       create: (_) {
-        final viewModel =
-            StickyGroupListViewModel(headerDefaultHeight: groupHeaderHeight);
-        viewModel.initParameters(keys: _headerGlobalKeys.values.toList());
+        final viewModel = StickyGroupListViewModel(
+            headerDefaultHeight: groupHeaderHeight,
+            keys: _headerGlobalKeys.values.toList());
         _scrollController.addListener(() => _scrollListener(viewModel));
         return viewModel;
       },
@@ -102,6 +102,7 @@ class StickyGroupList<T, E extends Object> extends StatelessWidget {
     if (isDownScroll) {
       // 下スクロール時
 
+      // ヘッダー同士が接触した後の高さ更新
       if (keyList.length > keyList.indexOf(currentKey) + 1) {
         final nextKey = keyList[keyList.indexOf(currentKey) + 1];
         final nextHeader = nextKey.currentContext?.findRenderObject()
@@ -120,8 +121,7 @@ class StickyGroupList<T, E extends Object> extends StatelessWidget {
       // 上スクロール時
 
       // ヘッダー同士が接触した後の高さ更新
-      var currentHeight = viewModel.getHeaderHeight(currentKey);
-      if (currentHeight < groupHeaderHeight) {
+      if (viewModel.getHeaderHeight(currentKey) < groupHeaderHeight) {
         // 上部ヘッダーの高さを変更
 
         if (keyList.length > keyList.indexOf(currentKey) + 1) {
@@ -129,7 +129,7 @@ class StickyGroupList<T, E extends Object> extends StatelessWidget {
           final nextHeader = nextKey.currentContext?.findRenderObject()
               as RenderSliverPersistentHeader?;
           if (nextHeader != null) {
-            currentHeight = nextHeader.constraints.precedingScrollExtent -
+            final currentHeight = nextHeader.constraints.precedingScrollExtent -
                 _scrollController.offset;
 
             // 高さ更新
