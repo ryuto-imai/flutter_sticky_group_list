@@ -58,5 +58,5 @@ class _DefaultSliverPersistentHeaderDelegate
 
   @override
   bool shouldRebuild(SliverPersistentHeaderDelegate oldDelegate) =>
-      maxExtent != oldDelegate.maxExtent;
+      minExtent != oldDelegate.minExtent || maxExtent != oldDelegate.maxExtent;
 }
