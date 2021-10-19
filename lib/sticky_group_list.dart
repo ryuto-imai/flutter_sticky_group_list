@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'default_sliver_persistent_header.dart';
 import 'package:provider/provider.dart';
@@ -38,7 +39,7 @@ class StickyGroupList<T, E extends Object> extends StatelessWidget {
     required this.itemBuilder,
     this.onRefresh,
     this.groupHeaderBackgroundColor,
-    this.groupHeaderHeight = 40,
+    this.groupHeaderHeight = 60,
   }) : super(key: key);
 
   @override
@@ -88,7 +89,7 @@ class StickyGroupList<T, E extends Object> extends StatelessWidget {
   void _scrollListener(StickyGroupListViewModel viewModel) {
     final keyList = _headerGlobalKeys.values.toList();
     final currentKey =
-        keyList.firstWhere((element) => viewModel.pinnedMap[element] ?? false);
+        keyList.firstWhere((element) => viewModel.getHeaderHeight(element) > 0);
     final currentHeader = currentKey.currentContext?.findRenderObject()
         as RenderSliverPersistentHeader?;
 
@@ -98,54 +99,51 @@ class StickyGroupList<T, E extends Object> extends StatelessWidget {
 
     final isDownScroll = currentHeader.constraints.userScrollDirection ==
         ScrollDirection.reverse;
-    if (isDownScroll && keyList.length > keyList.indexOf(currentKey) + 1) {
+    if (isDownScroll) {
       // 下スクロール時
-      final nextKey = keyList[keyList.indexOf(currentKey) + 1];
-      final nextHeader = nextKey.currentContext?.findRenderObject()
-          as RenderSliverPersistentHeader?;
 
-      if (nextHeader != null) {
-        final double currentHeight =
-            nextHeader.constraints.precedingScrollExtent -
-                _scrollController.offset;
-        // ヘッダー同士が接触した後の高さ更新
-        if (currentHeight < groupHeaderHeight) {
-          viewModel.setSeparatorHeight(currentKey, currentHeight);
-        }
-        // 下位ヘッダーが上までスクロールしきった時のpinned更新
-        if (currentHeight <= 0) {
-          viewModel.setPinned(nextKey);
+      if (keyList.length > keyList.indexOf(currentKey) + 1) {
+        final nextKey = keyList[keyList.indexOf(currentKey) + 1];
+        final nextHeader = nextKey.currentContext?.findRenderObject()
+            as RenderSliverPersistentHeader?;
+
+        if (nextHeader != null) {
+          final double currentHeight =
+              nextHeader.constraints.precedingScrollExtent -
+                  _scrollController.offset;
+
+          // 高さ更新
+          viewModel.setHeaderHeight(currentKey, currentHeight);
         }
       }
     } else if (!isDownScroll) {
       // 上スクロール時
 
-      // 上位ヘッダーが表示された時のpinned更新
-      if (0 <= keyList.indexOf(currentKey) - 1) {
-        final previousKey = keyList[keyList.indexOf(currentKey) - 1];
-        if ((currentHeader.constraints.precedingScrollExtent -
-                _scrollController.offset) >
-            0) {
-          viewModel.setPinned(previousKey, needNotify: false);
-        }
-      }
-
       // ヘッダー同士が接触した後の高さ更新
-      if (keyList.length > keyList.indexOf(currentKey) + 1) {
-        final nextKey = keyList[keyList.indexOf(currentKey) + 1];
-        final nextHeader = nextKey.currentContext?.findRenderObject()
-            as RenderSliverPersistentHeader?;
-        if (nextHeader != null) {
-          final double currentHeight =
-              nextHeader.constraints.precedingScrollExtent +
-                  nextHeader.constraints.overlap -
-                  _scrollController.offset;
-          if (currentHeight < groupHeaderHeight) {
-            viewModel.setSeparatorHeight(currentKey, currentHeight);
-          } else {
-            viewModel.setSeparatorHeight(currentKey, groupHeaderHeight);
+      var currentHeight = viewModel.getHeaderHeight(currentKey);
+      if (currentHeight < groupHeaderHeight) {
+        // 上部ヘッダーの高さを変更
+
+        if (keyList.length > keyList.indexOf(currentKey) + 1) {
+          final nextKey = keyList[keyList.indexOf(currentKey) + 1];
+          final nextHeader = nextKey.currentContext?.findRenderObject()
+              as RenderSliverPersistentHeader?;
+          if (nextHeader != null) {
+            currentHeight = nextHeader.constraints.precedingScrollExtent -
+                _scrollController.offset;
+
+            // 高さ更新
+            viewModel.setHeaderHeight(currentKey, currentHeight);
           }
         }
+      } else if (0 <= keyList.indexOf(currentKey) - 1) {
+        // 上部ヘッダーより前にあるヘッダーを表示
+        final previousKey = keyList[keyList.indexOf(currentKey) - 1];
+        final previousHeight = currentHeader.constraints.precedingScrollExtent -
+            _scrollController.offset;
+
+        // 高さ更新
+        viewModel.setHeaderHeight(previousKey, previousHeight);
       }
     }
   }
@@ -181,12 +179,11 @@ class _SliverGroupList<T, E extends Object> extends StatelessWidget {
       final globalKey = headerGlobalKeys[key];
       slivers
         ..add(DefaultSliverPersistentHeader(
-          headerKey: globalKey,
-          title: groupHeaderTitleBuilder(key),
-          backgroundColor: groupHeaderBackgroundColor,
-          pinned: viewModel.pinnedMap[globalKey],
-          height: viewModel.groupHeaderHeightMap[globalKey],
-        ))
+            headerKey: globalKey,
+            title: groupHeaderTitleBuilder(key),
+            backgroundColor: groupHeaderBackgroundColor,
+            maxHeight: viewModel.headerDefaultHeight,
+            minHeight: viewModel.getHeaderHeight(globalKey)))
         ..add(SliverList(
             delegate: SliverChildBuilderDelegate(
                 (context, index) => itemBuilder(context, value[index]),

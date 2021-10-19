@@ -6,43 +6,44 @@ class DefaultSliverPersistentHeader extends StatelessWidget {
   final Key? headerKey;
   final Widget? title;
   final Color? backgroundColor;
-  final double? height;
-  final bool? pinned;
+  final double maxHeight;
+  final double minHeight;
 
   DefaultSliverPersistentHeader(
       {this.headerKey,
       this.title,
       this.backgroundColor,
-      this.height,
-      this.pinned});
+      required this.maxHeight,
+      required this.minHeight});
 
   @override
   Widget build(BuildContext context) {
-    final double defaultHeight = 40;
     return SliverPersistentHeader(
-      key: headerKey,
-      delegate: _DefaultSliverPersistentHeaderDelegate(
-          child: PreferredSize(
-              preferredSize: Size.fromHeight(height ?? defaultHeight),
-              child: Container(
-                  color: backgroundColor,
-                  child: Padding(
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: title,
-                    ),
-                    padding: EdgeInsets.symmetric(horizontal: 8),
-                  )))),
-      pinned: pinned ?? false,
-    );
+        key: headerKey,
+        delegate: _DefaultSliverPersistentHeaderDelegate(
+            child: Container(
+                color: backgroundColor,
+                child: Padding(
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: title,
+                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 8),
+                )),
+            maxHeight: maxHeight,
+            minHeight: minHeight),
+        pinned: true);
   }
 }
 
 class _DefaultSliverPersistentHeaderDelegate
     extends SliverPersistentHeaderDelegate {
-  final PreferredSize child;
+  final Widget child;
+  final double maxHeight;
+  final double minHeight;
 
-  _DefaultSliverPersistentHeaderDelegate({required this.child});
+  _DefaultSliverPersistentHeaderDelegate(
+      {required this.child, required this.maxHeight, required this.minHeight});
 
   @override
   Widget build(
@@ -50,11 +51,12 @@ class _DefaultSliverPersistentHeaderDelegate
       child;
 
   @override
-  double get maxExtent => child.preferredSize.height;
+  double get maxExtent => maxHeight;
 
   @override
-  double get minExtent => child.preferredSize.height;
+  double get minExtent => minHeight;
 
   @override
-  bool shouldRebuild(SliverPersistentHeaderDelegate oldDelegate) => false;
+  bool shouldRebuild(SliverPersistentHeaderDelegate oldDelegate) =>
+      maxExtent != oldDelegate.maxExtent;
 }

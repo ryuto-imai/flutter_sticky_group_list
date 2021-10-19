@@ -27,7 +27,8 @@ class _HomeView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final list = List.generate(100,
-            (index) => _ListData(id: index % 10, title: 'Title ${index.toString()}'));
+        (index) =>
+            _ListData(id: index % 10, title: 'Title ${index.toString()}'));
 
     return PlatformScaffold(
       appBar: PlatformAppBar(
@@ -52,6 +53,7 @@ class _HomeView extends StatelessWidget {
           print("refresh");
         },
         groupHeaderBackgroundColor: PlatformTheme.of(context).primaryColor,
+        groupHeaderHeight: 60,
       ),
       iosContentPadding: true,
       iosContentBottomPadding: true,
