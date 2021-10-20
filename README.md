@@ -1,6 +1,6 @@
 # flutter_sticky_group_list
 
-A new Flutter project.
+スティッキーヘッダーとグループ化されたリスト（MaterialとCupertino両対応）
 
 ## Getting Started
 
